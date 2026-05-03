@@ -4,7 +4,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_community.chat_models import ChatTongyi
-from langchain.schema import HumanMessage, SystemMessage
+from langchain.schema import HumanMessage, SystemMessage,AIMessage
 from dotenv import load_dotenv
 
 from rag.loader import load_pdf
@@ -80,3 +80,30 @@ async def analyze(request: AnalyzeRequest):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# 在 main.py 顶部 import 区域加上
+from agent.planner import run_agent
+
+# 新增请求模型
+class AgentRequest(BaseModel):
+    message: str
+    chat_history: list = []
+
+# 新增接口
+@app.post("/agent")
+async def agent_chat(request: AgentRequest):
+    """
+    Agent 接口：会自动决定调用哪些工具
+    比 /analyze 更智能，能主动获取信息
+    """
+    # 把前端传来的历史记录转换成 LangChain 的消息格式
+    history = []
+    for item in request.chat_history:
+        if item["role"] == "human":
+            history.append(HumanMessage(content=item["content"]))
+        elif item["role"] == "ai":
+            history.append(AIMessage(content=item["content"]))
+
+    result = run_agent(request.message, history)
+    return {"reply": result}
