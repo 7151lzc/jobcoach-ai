@@ -1,0 +1,25 @@
+cd D:\Desktop\jobcoach-ai\backend
+uvicorn main:app --reload --port 8000
+
+http://127.0.0.1:8000/docs
+
+
+{
+  "jd_text": "岗位：大模型应用开发工程师。要求：熟悉LangChain、RAG系统开发、向量数据库，有FastAPI开发经验，了解主流LLM API调用。",
+  "question": "候选人是否适合这个岗位，有哪些技能差距？"
+}
+
+
+
+
+{
+  "message": "我要应聘字节跳动的大模型开发岗位，帮我了解这家公司",
+  "chat_history": []
+}
+
+
+
+{
+  "message": "那这个岗位的薪资大概多少？",
+  "chat_history": []
+}
