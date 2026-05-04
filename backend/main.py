@@ -90,20 +90,45 @@ class AgentRequest(BaseModel):
     message: str
     chat_history: list = []
 
-# 新增接口
 @app.post("/agent")
 async def agent_chat(request: AgentRequest):
-    """
-    Agent 接口：会自动决定调用哪些工具
-    比 /analyze 更智能，能主动获取信息
-    """
-    # 把前端传来的历史记录转换成 LangChain 的消息格式
-    history = []
-    for item in request.chat_history:
-        if item["role"] == "human":
-            history.append(HumanMessage(content=item["content"]))
-        elif item["role"] == "ai":
-            history.append(AIMessage(content=item["content"]))
-
+    # 把用户输入存入记忆
+    memory.add("user", request.message)
+    
+    # 取出上下文（根据策略自动处理）
+    context = memory.get_context()
+    
+    # 去掉最后一条（当前用户输入），因为 run_agent 会自己加
+    history = context[:-1]
+    
     result = run_agent(request.message, history)
-    return {"reply": result}
+    
+    # 把 AI 回复也存入记忆
+    memory.add("assistant", result)
+    
+    return {
+        "reply": result,
+        "turn": memory.turn_count  # 顺便返回当前是第几轮，方便调试
+    }
+
+@app.post("/memory/clear")
+def clear_memory():
+    """清空对话记忆，开始新会话"""
+    memory.clear()
+    return {"status": "ok", "message": "记忆已清空"}
+
+@app.get("/memory/status")
+def memory_status():
+    """查看当前记忆状态，调试用"""
+    return {
+        "strategy": memory.strategy,
+        "total_messages": len(memory.messages),
+        "turns": memory.turn_count,
+        "context_size": len(memory.get_context())
+    }
+
+
+from memory import ConversationMemory
+# 每个会话一个记忆对象
+# 现在先用单个全局对象，后面用户系统做好后改成 dict
+memory = ConversationMemory(strategy="window", window_size=6)
