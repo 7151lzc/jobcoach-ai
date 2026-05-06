@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobCoach AI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 36px;
+    }
+
+    /* 上传区域 */
+    .upload-zone {
+      border: 1.5px dashed #334155;
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s;
+      margin-bottom: 24px;
+    }
+
+    .upload-zone:hover { border-color: #3b82f6; }
+    .upload-zone.uploaded { border-color: #22c55e; border-style: solid; }
+
+    .upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-text { font-size: 14px; color: #94a3b8; }
+    .upload-status { font-size: 13px; color: #22c55e; margin-top: 6px; }
+
+    /* 输入区域 */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    textarea, input {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      color: #e2e8f0;
+      font-size: 13px;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+    }
+
+    textarea:focus, input:focus { border-color: #3b82f6; }
+
+    /* 按钮 */
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background .2s;
+      margin-right: 10px;
+    }
+
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { background: #334155; cursor: not-allowed; }
+    .btn-secondary {
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
+    .btn-secondary:hover { background: #334155; }
+
+    /* 结果区域 */
+    .result-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+      min-height: 120px;
+      display: none;
+    }
+
+    .result-box.visible { display: block; }
+
+    .result-header {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .result-content {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+    }
+
+    /* 光标闪烁动画 */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 16px;
+      background: #3b82f6;
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* Agent 对话区 */
+    .chat-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 24px;
+      display: none;
+    }
+
+    .chat-box.visible { display: block; }
+
+    .chat-messages {
+      min-height: 200px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .msg {
+      margin-bottom: 14px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .msg-role {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .msg-user .msg-role { background: #1d4ed8; color: #bfdbfe; }
+    .msg-ai .msg-role { background: #065f46; color: #a7f3d0; }
+
+    .msg-content {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input-row input { margin: 0; }
+
+    /* Tab 切换 */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 4px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 7px;
+      color: #64748b;
+      transition: all .15s;
+    }
+
+    .tab.active {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #64748b;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .status-dot.green { background: #22c55e; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>JobCoach AI 🎯</h1>
+  <p class="subtitle">上传简历 + 输入 JD，AI 分析技能差距，帮你拿下 offer</p>
+
+  <!-- 上传区域 -->
+  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">📄</div>
+    <div class="upload-text">点击上传简历 PDF</div>
+    <div class="upload-status" id="uploadStatus"></div>
+  </div>
+  <input type="file" id="fileInput" accept=".pdf" style="display:none" onchange="uploadFile(this)">
+
+  <!-- Tab 切换 -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('analyze')">📊 简历分析</div>
+    <div class="tab" onclick="switchTab('agent')">🤖 AI 顾问</div>
+  </div>
+
+  <!-- 简历分析 Tab -->
+  <div class="tab-content active" id="tab-analyze">
+    <div class="input-grid">
+      <div>
+        <label>目标岗位 JD</label>
+        <textarea id="jdText" rows="5" placeholder="粘贴岗位描述..."></textarea>
+      </div>
+      <div>
+        <label>你想问的问题</label>
+        <textarea id="question" rows="5" placeholder="例如：我是否适合这个岗位？有哪些技能差距？"></textarea>
+      </div>
+    </div>
+    <button class="btn" onclick="analyze()" id="analyzeBtn">开始分析</button>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-header">
+        <span><span class="status-dot green"></span>分析结果</span>
+        <span id="tokenCount" style="font-size:11px;"></span>
+      </div>
+      <div class="result-content" id="resultContent"></div>
+    </div>
+  </div>
+
+  <!-- Agent 对话 Tab -->
+  <div class="tab-content" id="tab-agent">
+    <div class="chat-box visible">
+      <div class="result-header">
+        <span><span class="status-dot green"></span>AI 求职顾问</span>
+        <button class="btn btn-secondary" style="padding:4px 10px;font-size:12px" onclick="clearChat()">清空对话</button>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg msg-ai">
+          <span class="msg-role">AI</span>
+          <span class="msg-content">你好！我是你的求职顾问。可以告诉我你想应聘哪家公司的什么岗位，我来帮你分析和准备。</span>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="例如：我要应聘字节跳动大模型岗位，帮我了解这家公司" onkeydown="if(event.key==='Enter') sendMessage()">
+        <button class="btn" onclick="sendMessage()" id="sendBtn">发送</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+
+// ── 文件上传 ──
+async function uploadFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const zone = document.getElementById('uploadZone');
+  const status = document.getElementById('uploadStatus');
+  status.textContent = '上传中...';
+
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const res = await fetch(`${API}/upload`, { method: 'POST', body: form });
+    const data = await res.json();
+    zone.classList.add('uploaded');
+    status.textContent = `✓ ${file.name}（${data.chunks} 个文本块）`;
+  } catch (e) {
+    status.textContent = '上传失败，请检查服务是否启动';
+    status.style.color = '#ef4444';
+  }
+}
+
+// ── 流式分析 ──
+async function analyze() {
+  const jd = document.getElementById('jdText').value.trim();
+  const q = document.getElementById('question').value.trim();
+  if (!jd || !q) { alert('请填写 JD 和问题'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  const box = document.getElementById('resultBox');
+  const content = document.getElementById('resultContent');
+
+  btn.disabled = true;
+  btn.textContent = '分析中...';
+  box.classList.add('visible');
+  content.innerHTML = '<span class="cursor"></span>';
+
+  let text = '';
+  let charCount = 0;
+
+  try {
+    const res = await fetch(`${API}/analyze/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jd_text: jd, question: q })
+    });
+
+    // 读取 SSE 流
+    // 为什么用 reader 而不是 EventSource？
+    // EventSource 只支持 GET 请求，我们需要 POST 传参数
+    // 手动读取 ReadableStream 可以处理 POST 的流式响应
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (data.done) {
+            // 流结束，移除光标
+            content.innerHTML = text;
+            break;
+          }
+          if (data.token) {
+            text += data.token;
+            charCount += data.token.length;
+            // 实时渲染，加上闪烁光标
+            content.innerHTML = text + '<span class="cursor"></span>';
+            document.getElementById('tokenCount').textContent = `${charCount} 字`;
+          }
+        } catch {}
+      }
+    }
+  } catch (e) {
+    content.textContent = '请求失败：' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '开始分析';
+}
+
+// ── Agent 对话 ──
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  addMessage('user', msg);
+  input.value = '';
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+
+  // 先加一个"思考中"占位
+  const thinkingId = 'msg-' + Date.now();
+  addMessage('ai', '思考中...', thinkingId);
+
+  try {
+    const res = await fetch(`${API}/agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, chat_history: [] })
+    });
+    const data = await res.json();
+
+    // 替换"思考中"为真实回答
+    const el = document.getElementById(thinkingId);
+    if (el) el.textContent = data.reply;
+
+  } catch (e) {
+    const el = document.getElementById(thinkingId);
+    if (el) el.textContent = '请求失败：' + e.message;
+  }
+
+  btn.disabled = false;
+}
+
+function addMessage(role, content, id) {
+  const box = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg msg-${role === 'user' ? 'user' : 'ai'}`;
+  if (id) div.id = id;
+  div.innerHTML = `
+    <span class="msg-role">${role === 'user' ? '你' : 'AI'}</span>
+    <span class="msg-content">${content}</span>
+  `;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function clearChat() {
+  await fetch(`${API}/memory/clear`, { method: 'POST' });
+  document.getElementById('chatMessages').innerHTML = `
+    <div class="msg msg-ai">
+      <span class="msg-role">AI</span>
+      <span class="msg-content">对话已清空，我们重新开始吧！</span>
+    </div>`;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['analyze','agent'][i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+</body>
+</html>

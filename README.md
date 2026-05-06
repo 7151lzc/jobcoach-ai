@@ -1,8 +1,10 @@
 # JobCoach AI 🎯
+
+> 上传简历 + 输入 JD，AI 自动分析技能差距、生成面试题、给出备考建议
+
 [![演示视频]
 (https://www.bilibili.com/video/BV1hbRqB8EXG/?vd_source=94ab7663b6834ded682a4ee02719e259)]
 
-> 上传简历 + 输入 JD，AI 自动分析技能差距、生成面试题、给出备考建议
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?logo=fastapi)](https://fastapi.tiangolo.com)
